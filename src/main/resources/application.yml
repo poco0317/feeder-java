@@ -23,6 +23,7 @@ reddit:
   
 humblebundle:
   url: ${HUMBLE_BUNDLE_URL}
+  root: ${HUMBLE_BUNDLE_SITE}
 
 logging:
   level:

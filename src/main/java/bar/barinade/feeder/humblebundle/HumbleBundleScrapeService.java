@@ -25,7 +25,10 @@ public class HumbleBundleScrapeService {
 	private static final ObjectMapper mapper = new ObjectMapper();
 	
 	@Value("${humblebundle.url}")
-	private String bundleUrl;
+	private String bundlePage;
+	
+	@Value("${humblebundle.root}")
+	private String humbleBundleRootPage;
 	
 	@PostConstruct
 	private void init() {
@@ -42,7 +45,7 @@ public class HumbleBundleScrapeService {
 	public List<Bundle> scrape() {
 		
 		try {
-			Document doc = Jsoup.connect(bundleUrl).get();
+			Document doc = Jsoup.connect(bundlePage).get();
 			
 			Element jsonScriptElement = doc.getElementById("landingPage-json-data");
 			String json = jsonScriptElement.html();
@@ -64,7 +67,7 @@ public class HumbleBundleScrapeService {
 			
 			return allBundles;
 		} catch (Exception e) {
-			m_logger.error("Failed to scrape {} - {}", bundleUrl, e.getMessage());
+			m_logger.error("Failed to scrape {} - {}", bundlePage, e.getMessage());
 			return null;
 		}
 	}
@@ -79,7 +82,7 @@ public class HumbleBundleScrapeService {
 			output.add(
 					new Bundle(
 							(String)bundle.get("tile_short_name"),
-							(String)bundle.get("product_url")
+							humbleBundleRootPage + (String)bundle.get("product_url")
 							)
 					);
 		}
