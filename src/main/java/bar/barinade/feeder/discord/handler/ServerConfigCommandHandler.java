@@ -38,7 +38,7 @@ public class ServerConfigCommandHandler extends CommandHandlerBase {
 	private static final String OPTION_UPVOTES = "upvotes";
 	private static final String OPTION_SUBREDDIT = "subreddit";
 	private static final String OPTION_CODE = "code";
-	private static final String OPTION_ONOFF = "on|off";
+	private static final String OPTION_ONOFF = "on-off";
 	
 	@Autowired
 	private ServerConfigService configService;
