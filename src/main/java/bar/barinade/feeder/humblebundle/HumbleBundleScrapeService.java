@@ -45,7 +45,7 @@ public class HumbleBundleScrapeService {
 			Document doc = Jsoup.connect(bundleUrl).get();
 			
 			Element jsonScriptElement = doc.getElementById("landingPage-json-data");
-			String json = jsonScriptElement.text();
+			String json = jsonScriptElement.html();
 			m_logger.info(doc.toString());
 			m_logger.info(json);
 			
