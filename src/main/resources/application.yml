@@ -20,6 +20,9 @@ discord:
 reddit:
   clientid: ${REDDIT_CLIENTID}
   clientsecret: ${REDDIT_SECRET}
+  
+humblebundle:
+  url: ${HUMBLE_BUNDLE_URL}
 
 logging:
   level:

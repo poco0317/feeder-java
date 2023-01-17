@@ -30,9 +30,15 @@ public class ServerConfigCommandHandler extends CommandHandlerBase {
 	private static final String NAME_CMD_REMOVE = "remove";
 	private static final String NAME_CMD_OUTPUT = "channel";
 	
+	private static final String NAME_CMD_HUMBLE_TOGGLE = "humbletoggle";
+	private static final String NAME_CMD_PARTNER = "humblepartner";
+	private static final String NAME_CMD_REMOVE_PARTNER = "humbleunpartner";
+	
 	private static final String OPTION_CHANNEL = "channel";
 	private static final String OPTION_UPVOTES = "upvotes";
 	private static final String OPTION_SUBREDDIT = "subreddit";
+	private static final String OPTION_CODE = "code";
+	private static final String OPTION_ONOFF = "on|off";
 	
 	@Autowired
 	private ServerConfigService configService;
@@ -54,7 +60,13 @@ public class ServerConfigCommandHandler extends CommandHandlerBase {
 						new SubcommandData(NAME_CMD_REMOVE, "Remove a subreddit feed")
 							.addOption(OptionType.STRING, OPTION_SUBREDDIT, "Target subreddit", true),
 						new SubcommandData(NAME_CMD_OUTPUT, "Set the output channel")
-							.addOption(OptionType.CHANNEL, OPTION_CHANNEL, "Target channel", true)
+							.addOption(OptionType.CHANNEL, OPTION_CHANNEL, "Target channel", true),
+						new SubcommandData(NAME_CMD_HUMBLE_TOGGLE, "Toggle Humble Bundle posting")
+							.addOption(OptionType.BOOLEAN, OPTION_ONOFF, "On or Off"),
+						new SubcommandData(NAME_CMD_PARTNER, "Set the Humble Bundle partner code")
+							.addOption(OptionType.STRING, OPTION_CODE, "URL Query String"),
+						new SubcommandData(NAME_CMD_REMOVE_PARTNER, "Unset the Humble Bundle partner code")
+							
 				)
 		};
 	}
@@ -85,6 +97,12 @@ public class ServerConfigCommandHandler extends CommandHandlerBase {
 				handleRemove(event);
 			} else if (subcmd.equals(NAME_CMD_OUTPUT)) {
 				handleOutput(event);
+			} else if (subcmd.equals(NAME_CMD_HUMBLE_TOGGLE)) {
+				handleBundleSet(event);
+			} else if (subcmd.equals(NAME_CMD_PARTNER)) {
+				handleBundlePartner(event);
+			} else if (subcmd.equals(NAME_CMD_REMOVE_PARTNER)) {
+				handleBundlePartnerUnset(event);
 			} else {
 				// ???
 				m_logger.warn("{} attmpted to use unimplemented config command {}", event.getMember().getId(), subcmd);
@@ -95,6 +113,36 @@ public class ServerConfigCommandHandler extends CommandHandlerBase {
 			m_logger.warn("{} attempted to use a null config command", event.getMember().getId());
 			event.getHook().editOriginal("That command does not exist. You shouldn't see this").queue();
 		}
+	}
+	
+	private void handleBundleSet(SlashCommandEvent event) {
+		final Long guildId = event.getGuild().getIdLong();
+		final Boolean toggle = event.getOption(OPTION_ONOFF).getAsBoolean();
+		
+		configService.setPostHumbleBundleLinks(guildId, toggle);
+		
+		if (configService.getPostHumbleBundleLinks(guildId)) {
+			event.getHook().editOriginal("Turned on Humble Bundle Posting.").queue();
+		} else {
+			event.getHook().editOriginal("Turned off Humble Bundle Posting.").queue();
+		}
+	}
+	
+	private void handleBundlePartner(SlashCommandEvent event) {
+		final Long guildId = event.getGuild().getIdLong();
+		final String code = event.getOption(OPTION_CODE).getAsString();
+		
+		configService.setHumbleBundlePartnerCode(guildId, code);
+		
+		event.getHook().editOriginal("Set Humble Bundle Partner Code to `"+code+"`. Remember to turn on Humble Bundle Posting.").queue();
+	}
+	
+	private void handleBundlePartnerUnset(SlashCommandEvent event) {
+		final Long guildId = event.getGuild().getIdLong();
+
+		configService.setHumbleBundlePartnerCode(guildId, null);
+		
+		event.getHook().editOriginal("Removed Humble Bundle Partner Code from future posts.").queue();
 	}
 	
 	private void handleSet(SlashCommandEvent event) {

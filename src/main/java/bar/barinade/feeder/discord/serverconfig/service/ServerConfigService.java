@@ -41,4 +41,34 @@ public class ServerConfigService {
 		return getConfig(guildId).getChannelId();
 	}
 	
+	@Transactional
+	public void setHumbleBundlePartnerCode(Long guildId, String code) {
+		ServerConfiguration config = getConfig(guildId);
+		config.setHumbleBundlePartnerCode(code);
+		configRepo.saveAndFlush(config);
+		m_logger.info("Guild {} set humble bundle partner code to {}", guildId, code);
+	}
+	
+	@Transactional
+	public String getHumbleBundlePartnerCode(Long guildId) {
+		String code = getConfig(guildId).getHumbleBundlePartnerCode();
+		if (code == null) {
+			code = "";
+		}
+		return code;
+	}
+	
+	@Transactional
+	public void setPostHumbleBundleLinks(Long guildId, boolean b) {
+		ServerConfiguration config = getConfig(guildId);
+		config.setSendHumbleBundle(b);
+		configRepo.saveAndFlush(config);
+		m_logger.info("Guild {} set humble bundle posting to {}", guildId, b);
+	}
+	
+	@Transactional
+	public Boolean getPostHumbleBundleLinks(Long guildId) {
+		return getConfig(guildId).getSendHumbleBundle();
+	}
+	
 }

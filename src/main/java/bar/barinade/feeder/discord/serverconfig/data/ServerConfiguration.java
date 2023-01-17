@@ -20,6 +20,12 @@ public class ServerConfiguration {
 	@Column(name = "channel_id", nullable = true)
 	private Long channelId;
 	
+	@Column(name = "send_humblebundle", nullable = true)
+	private Boolean sendHumbleBundle = false;
+	
+	@Column(name = "humblebundle_partner", nullable = true)
+	private String humbleBundlePartnerCode;
+	
 	@OneToMany(mappedBy = "id.guild")
 	private Set<Subreddit> subreddits;
 
@@ -45,6 +51,22 @@ public class ServerConfiguration {
 
 	public void setSubreddits(Set<Subreddit> subreddits) {
 		this.subreddits = subreddits;
+	}
+
+	public Boolean getSendHumbleBundle() {
+		return sendHumbleBundle;
+	}
+
+	public void setSendHumbleBundle(Boolean sendHumbleBundle) {
+		this.sendHumbleBundle = sendHumbleBundle;
+	}
+
+	public String getHumbleBundlePartnerCode() {
+		return humbleBundlePartnerCode;
+	}
+
+	public void setHumbleBundlePartnerCode(String humbleBundlePartnerCode) {
+		this.humbleBundlePartnerCode = humbleBundlePartnerCode;
 	}
 
 }

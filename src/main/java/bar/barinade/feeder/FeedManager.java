@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -15,11 +16,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import bar.barinade.feeder.discord.BotManager;
+import bar.barinade.feeder.discord.serverconfig.data.SentHumbleBundle;
 import bar.barinade.feeder.discord.serverconfig.data.SentMessage;
+import bar.barinade.feeder.discord.serverconfig.data.ServerConfiguration;
 import bar.barinade.feeder.discord.serverconfig.data.Subreddit;
+import bar.barinade.feeder.discord.serverconfig.service.SentHumbleBundleService;
 import bar.barinade.feeder.discord.serverconfig.service.SentMessageService;
 import bar.barinade.feeder.discord.serverconfig.service.ServerConfigService;
 import bar.barinade.feeder.discord.serverconfig.service.SubredditService;
+import bar.barinade.feeder.humblebundle.Bundle;
+import bar.barinade.feeder.humblebundle.HumbleBundleScrapeService;
 import bar.barinade.feeder.reddit.RedditService;
 import masecla.reddit4j.objects.RedditPost;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -38,6 +44,9 @@ public class FeedManager {
 	private RedditService reddit;
 	
 	@Autowired
+	private HumbleBundleScrapeService humbleBundleScraper;
+	
+	@Autowired
 	private SubredditService subService;
 	
 	@Autowired
@@ -45,6 +54,9 @@ public class FeedManager {
 	
 	@Autowired
 	private SentMessageService posted;
+	
+	@Autowired
+	private SentHumbleBundleService postedHumble;
 	
 	@Scheduled(fixedDelay = 1000L * 60L * 5L)
 	private void refresh() {
@@ -59,6 +71,7 @@ public class FeedManager {
 			guildsubs.put(id, l);
 		}
 		
+		m_logger.info("Feed refresh beginning Reddit Phase");
 		HashMap<String, List<RedditPost>> posts = new HashMap<>();
 		try {
 			for (Subreddit s : subs) {
@@ -115,9 +128,69 @@ public class FeedManager {
 				}
 			}
 		}
+		m_logger.info("Feed refresh finished Reddit Phase");
+		
+		m_logger.info("Feed refresh beginning HumbleBundle Phase");
+		List<Bundle> currentBundles = humbleBundleScraper.scrape();
+		for (Guild g : BotManager.getJDA().getGuilds()) {
+			final Long id = g.getIdLong();
+			
+			if (!config.getConfig(id).getSendHumbleBundle()) {
+				continue;
+			}
+			
+			List<SentHumbleBundle> sentBundles = postedHumble.getByGuild(id);
+			
+			Function<Bundle, Boolean> isBundleAlreadySent = bundle -> {
+				for (SentHumbleBundle b : sentBundles) {
+					if (b.getName().equalsIgnoreCase(bundle.name())) {
+						return true;
+					}
+				}
+				return false;
+			};
+			
+			for (Bundle bundle : currentBundles) {
+				
+				if (isBundleAlreadySent.apply(bundle)) {
+					continue;
+				}
+				
+				postBundle(id, bundle);
+			}
+		}
+		m_logger.info("Feed refresh finished HumbleBundle Phase");
 		
 		
 		m_logger.info("Feed refresh finished");
+	}
+	
+	private void postBundle(Long guildId, Bundle bundle) {
+		m_logger.trace("Posting bundle in guild {}", guildId);
+		JDA jda = BotManager.getJDA();
+		
+		
+		ServerConfiguration cfg = config.getConfig(guildId);
+		Long channelId = cfg.getChannelId();
+		if (channelId != null) {
+			TextChannel chan = jda.getTextChannelById(channelId);
+			if (chan != null) {
+				String partnerCode = cfg.getHumbleBundlePartnerCode();
+				if (partnerCode == null) {
+					partnerCode = "";
+				} else if (!partnerCode.isEmpty()) {
+					partnerCode = "?partner=" + partnerCode;
+				}
+				String url = bundle.url();
+				if (url == null) {
+					url = "";
+				}
+				String fmtstr = String.format("New Humble Bundle!\n%s\n%s", bundle.name(), url + partnerCode);
+				chan.sendMessage(fmtstr).queue(msg -> {
+					postedHumble.emplace(msg.getIdLong(), System.currentTimeMillis(), bundle.name(), guildId);
+				});
+			}
+		}
 	}
 	
 	private void postContent(Long guildId, RedditPost post) {
