@@ -143,14 +143,18 @@ public class FeedManager {
 			List<SentHumbleBundle> sentBundles = postedHumble.getByGuild(id);
 			
 			Set<String> names = new HashSet<>();
+			Set<String> urls = new HashSet<>();
 			Function<Bundle, Boolean> isBundleAlreadySent = bundle -> {
 				for (SentHumbleBundle b : sentBundles) {
 					if (b.getName().equalsIgnoreCase(bundle.name())) {
 						return true;
 					}
-					if (names.contains(bundle.name().toLowerCase())) {
-						return true;
-					}
+				}
+				if (names.contains(bundle.name().toLowerCase())) {
+					return true;
+				}
+				if (urls.contains(bundle.url())) {
+					return true;
 				}
 				return false;
 			};
@@ -162,6 +166,8 @@ public class FeedManager {
 				}
 				
 				names.add(bundle.name().toLowerCase());
+				urls.add(bundle.url());
+				
 				postBundle(id, bundle);
 			}
 		}
