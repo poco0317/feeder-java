@@ -49,8 +49,6 @@ public class HumbleBundleScrapeService {
 			
 			Element jsonScriptElement = doc.getElementById("landingPage-json-data");
 			String json = jsonScriptElement.html();
-			m_logger.info(doc.toString());
-			m_logger.info(json);
 			
 			ObjectReader reader = mapper.readerFor(Map.class);
 			Map<?,?> map = reader.readValue(json);
