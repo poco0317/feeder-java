@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -141,9 +142,13 @@ public class FeedManager {
 			
 			List<SentHumbleBundle> sentBundles = postedHumble.getByGuild(id);
 			
+			Set<String> names = new HashSet<>();
 			Function<Bundle, Boolean> isBundleAlreadySent = bundle -> {
 				for (SentHumbleBundle b : sentBundles) {
 					if (b.getName().equalsIgnoreCase(bundle.name())) {
+						return true;
+					}
+					if (names.contains(bundle.name().toLowerCase())) {
 						return true;
 					}
 				}
@@ -156,6 +161,7 @@ public class FeedManager {
 					continue;
 				}
 				
+				names.add(bundle.name().toLowerCase());
 				postBundle(id, bundle);
 			}
 		}
